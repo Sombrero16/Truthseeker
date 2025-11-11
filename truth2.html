@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytischer Recherche-Assistent</title>
+    <!-- Lade Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Setze eine angenehme Standard-Schriftart */
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        /* Einheitliche Übergänge für Interaktion */
+        button, textarea, #pro-bar, #contra-bar { transition: all 0.7s ease-in-out; }
+    </style>
+</head>
+<body>
+
+    <div class="min-h-screen flex flex-col items-center p-4">
+        <header class="text-center mb-8 pt-10">
+            <h1 class="text-4xl font-extrabold text-gray-900 mb-2">Analytischer Recherche-Assistent</h1>
+            <p class="text-lg text-gray-600">Geben Sie ein Ereignis oder Thema ein. Die KI sucht nach Pro- und Contra-Beweisen, gewichtet diese und erstellt einen Wahrscheinlichkeits-Score.</p>
+        </header>
+
+        <main class="w-full max-w-5xl bg-white p-8 rounded-xl shadow-2xl">
+
+            <!-- 1. Eingabebereich -->
+            <section class="mb-8">
+                <label for="input-text" class="block text-sm font-medium text-gray-700 mb-2">Ereignis zur Analyse (Input):</label>
+                <textarea id="input-text" rows="4" 
+                    class="w-full p-3 border-2 border-indigo-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-800 resize-none shadow-md"
+                    placeholder="Zum Beispiel: Ist das Bermuda-Dreieck wirklich ein Ort ungewöhnlich hoher Schiffsverluste oder nur ein Mythos?"
+                ></textarea>
+                <div class="mt-4 flex justify-end">
+                    <button id="send-button" onclick="handleSearch()"
+                        class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-lg hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                        Analyse starten
+                    </button>
+                </div>
+            </section>
+
+            <!-- Status und Ladeanzeige -->
+            <div id="status-message" class="text-center mb-4 text-sm font-medium text-red-600"></div>
+            <div id="loading-indicator" class="hidden text-center mb-6">
+                <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] text-indigo-500" role="status">
+                    <span class="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">Analysiert Beweise...</span>
+                </div>
+                <p class="mt-2 text-indigo-600">Die KI recherchiert und gewichtet die Pro- und Contra-Argumente...</p>
+            </div>
+
+            <!-- 2. Ausgabebereich -->
+            <section id="output-section" class="hidden">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">Ergebnis & Abwägung</h2>
+                
+                <!-- Scoring Bar Container -->
+                <div class="mb-8 p-4 bg-white rounded-xl shadow-inner border border-gray-200">
+                    <p class="font-semibold text-base text-gray-700 mb-3">Wahrscheinlichkeits-Score (PRO vs. CONTRA):</p>
+                    <div class="flex h-8 rounded-full overflow-hidden shadow-lg border border-gray-300 text-center">
+                        <!-- Pro Bar (links) -->
+                        <div id="pro-bar" class="flex items-center justify-center bg-green-500 text-white font-extrabold text-xs px-2" style="width: 50%;">
+                            <span id="pro-percent">50% PRO</span>
+                        </div>
+                        <!-- Contra Bar (rechts) -->
+                        <div id="contra-bar" class="flex items-center justify-center bg-red-500 text-white font-extrabold text-xs px-2" style="width: 50%;">
+                            <span id="contra-percent">50% CONTRA</span>
+                        </div>
+                    </div>
+                    <p class="mt-4 text-gray-600 italic font-medium">Zusammenfassende Analyse:</p>
+                    <div id="analysis-summary" class="text-gray-800 p-3 bg-gray-50 rounded-lg whitespace-pre-wrap">Die Analyse wird hier zusammengefasst, basierend auf der Stärke der gefundenen Beweise.</div>
+                </div>
+
+                <!-- Argumente (Pro/Contra) -->
+                <div class="grid lg:grid-cols-2 gap-6 mt-6">
+                    <div>
+                        <h3 class="text-xl font-bold text-green-700 mb-3 flex items-center">
+                            <svg class="w-6 h-6 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            PRO Argumente (Beweise für das Ereignis)
+                        </h3>
+                        <ul id="pro-list" class="space-y-4 text-gray-700">
+                            <!-- Pro arguments will be injected here -->
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-red-700 mb-3 flex items-center">
+                            <svg class="w-6 h-6 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            CONTRA Argumente (Beweise gegen das Ereignis)
+                        </h3>
+                        <ul id="con-list" class="space-y-4 text-gray-700">
+                            <!-- Con arguments will be injected here -->
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script>
+        const apiKey = "AIzaSyCMBBXxI93O2BBtARW8HRG3pWSndP_Nd-E"; 
+        const API_MODEL = 'gemini-2.5-flash-preview-09-2025';
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODEL}:generateContent?key=${apiKey}`;
+
+        const inputEl = document.getElementById('input-text');
+        const sendButton = document.getElementById('send-button');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const statusMessage = document.getElementById('status-message');
+        
+        // UI-Elemente
+        const outputSection = document.getElementById('output-section');
+        const proBar = document.getElementById('pro-bar');
+        const contraBar = document.getElementById('contra-bar');
+        const proPercent = document.getElementById('pro-percent');
+        const contraPercent = document.getElementById('contra-percent');
+        const analysisSummary = document.getElementById('analysis-summary');
+        const proList = document.getElementById('pro-list');
+        const conList = document.getElementById('con-list');
+
+
+        // NEUE Systemanweisung für die KI (Definiert die Rolle, den Prozess und das Format)
+        // Das Ausgabeformat wurde auf reinen Text mit Markern umgestellt, um den 400er Fehler zu umgehen.
+        const systemInstruction = `
+            Du bist ein neutraler analytischer Gutachter. Deine Aufgabe ist es, zu der vom Benutzer gestellten Frage oder dem Ereignis Beweise FÜR (PRO) und GEGEN (CONTRA) das Eintreten oder die Richtigkeit des Ereignisses zu sammeln.
+            
+            1.  **Recherche:** Nutze das Google Search Tool, um Argumente und Beweise zu finden.
+            2.  **Beweis-Hierarchie (Scoring-Faktor):** Priorisiere PRIMÄRE Beweise (offizielle Dokumente, wissenschaftliche Studien). Spekulative Quellen oder Blogs gelten als SEKUNDÄR-Argumente und werden schwächer gewichtet.
+            3.  **Abwägung (Scoring):** Schätze die Wahrscheinlichkeit in einem Prozentwert (0-100) ein, dass das Ereignis tatsächlich der Fall ist (PRO-Score).
+            4.  **Output-Format:** Du MUSST die Antwort in folgendem, exaktem Text-Format zurückgeben. Verwende nur die vier Marker SCORE:, SUMMARY:, PRO_ARGUMENTS: und CONTRA_ARGUMENTS:.
+            
+            BEISPIEL FÜR DAS AUSGABEFORMAT:
+            SCORE: 75
+            SUMMARY: Die Analyse zeigt eine moderate Wahrscheinlichkeit. Offizielle Berichte stützen die Pro-Seite, jedoch stellen glaubwürdige Sekundärquellen die These infrage. Das Ergebnis ist daher nicht eindeutig.
+            PRO_ARGUMENTS:
+            - Offizielle Flugberichte bestätigen ungewöhnlich starke Windböen zum Zeitpunkt des Vorfalls (Offizieller Bericht: NOAA-Studie).
+            - Ein Gutachten erklärt die Schiffsverluste mit starken, plötzlichen Strömungsänderungen (Wissenschaftliche Studie: Oceanographic Journal).
+            CONTRA_ARGUMENTS:
+            - Statistische Analysen zeigen keine signifikant höhere Verlustrate als in anderen Regionen mit ähnlichem Verkehr (Fehlende Dokumentation: University of Miami Report).
+            - Die ursprüngliche Mythenbildung wird auf einen Zeitungsartikel aus den 1960er Jahren zurückgeführt (Sekundärquelle: History Channel Dokumentation).
+        `;
+        
+        // Die responseSchema-Variable wird nun ignoriert, da wir auf Text umstellen.
+
+        /**
+         * Parst den reinen Text-Output der KI in ein strukturiertes Objekt.
+         */
+        function extractDataFromText(rawText) {
+            const data = {
+                pro_score_percentage: 50,
+                analysis_summary: "Parsing-Fehler: Konnte Datenstruktur nicht aus dem KI-Text extrahieren.",
+                pro_arguments: [],
+                con_arguments: []
+            };
+
+            // 1. Score extrahieren
+            const scoreMatch = rawText.match(/SCORE:\s*(\d+)/i);
+            if (scoreMatch && scoreMatch[1]) {
+                data.pro_score_percentage = parseInt(scoreMatch[1], 10);
+            }
+
+            // 2. Summary extrahieren
+            const summaryMatch = rawText.match(/SUMMARY:\s*([\s\S]*?)(?:PRO_ARGUMENTS:|$)/i);
+            if (summaryMatch && summaryMatch[1]) {
+                data.analysis_summary = summaryMatch[1].trim();
+            } else {
+                data.analysis_summary = "Zusammenfassung konnte nicht extrahiert werden.";
+            }
+
+            // 3. Argumente extrahieren (zwischen den Markern)
+            const proArgsMatch = rawText.match(/PRO_ARGUMENTS:\s*([\s\S]*?)CONTRA_ARGUMENTS:/i);
+            if (proArgsMatch && proArgsMatch[1]) {
+                // Argumente nach Zeilenumbrüchen teilen und leere oder reine Marker-Einträge entfernen
+                data.pro_arguments = proArgsMatch[1].split('\n')
+                    .map(line => line.trim().replace(/^- /, '')) // Bindestrich entfernen
+                    .filter(line => line.length > 0);
+            }
+
+            const conArgsMatch = rawText.match(/CONTRA_ARGUMENTS:\s*([\s\S]*)/i);
+            if (conArgsMatch && conArgsMatch[1]) {
+                data.con_arguments = conArgsMatch[1].split('\n')
+                    .map(line => line.trim().replace(/^- /, '')) // Bindestrich entfernen
+                    .filter(line => line.length > 0);
+            }
+
+            return data;
+        }
+
+
+        /**
+         * Führt die KI-gestützte Suche und Abwägung durch.
+         */
+        async function handleSearch() {
+            const userQuery = inputEl.value.trim();
+            if (!userQuery) {
+                statusMessage.textContent = "Bitte geben Sie eine Frage oder ein Thema ein.";
+                return;
+            }
+
+            // UI-Status setzen
+            statusMessage.textContent = '';
+            analysisSummary.innerHTML = 'Die KI verarbeitet Ihre Anfrage und sammelt Beweise...';
+            sendButton.disabled = true;
+            loadingIndicator.classList.remove('hidden');
+            outputSection.classList.add('hidden'); 
+            
+            // Setze initiale Score-Anzeige zurück
+            proBar.style.width = '50%';
+            contraBar.style.width = '50%';
+            proPercent.textContent = '50% PRO';
+            contraPercent.textContent = '50% CONTRA';
+            proList.innerHTML = `<li class="p-3 rounded-lg shadow-sm border border-green-300 border-opacity-30 bg-green-50 text-gray-500 italic">Wird geladen...</li>`;
+            conList.innerHTML = `<li class="p-3 rounded-lg shadow-sm border border-red-300 border-opacity-30 bg-red-50 text-gray-500 italic">Wird geladen...</li>`;
+
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                
+                // WICHTIG: Dies aktiviert das Google Search Grounding Tool
+                tools: [{ "google_search": {} }], 
+                
+                // Systemanweisung für die Rollendefinition
+                systemInstruction: {
+                    parts: [{ text: systemInstruction }]
+                }
+                // generationConfig und responseSchema wurden entfernt, um den 400er Fehler zu beheben.
+            };
+            
+            try {
+                const response = await fetchWithRetry(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                const candidate = result.candidates?.[0];
+                
+                if (!candidate || !candidate.content?.parts?.[0]?.text) {
+                    throw new Error("Fehler: Konnte keine gültige Antwort von der KI erhalten.");
+                }
+
+                const rawText = candidate.content.parts[0].text;
+                // NEU: Verwende die Text-Parsing-Funktion
+                const data = extractDataFromText(rawText);
+
+                // 1. Score berechnen und Bar aktualisieren
+                const proScore = Math.max(0, Math.min(100, data.pro_score_percentage || 50)); 
+                const conScore = 100 - proScore;
+
+                // Mindestbreite 1%
+                const proWidth = proScore <= 1 ? '1%' : `${proScore}%`; 
+                const conWidth = conScore <= 1 ? '1%' : `${conScore}%`; 
+
+                proBar.style.width = proWidth;
+                contraBar.style.width = conWidth;
+                
+                // Anpassung der Textfarbe basierend auf der Breite für Lesbarkeit
+                proPercent.textContent = `${proScore}% PRO`;
+                proPercent.style.color = proScore < 15 ? 'black' : 'white';
+
+                contraPercent.textContent = `${conScore}% CONTRA`;
+                contraPercent.style.color = conScore < 15 ? 'black' : 'white';
+
+                // Texte und Argumente
+                analysisSummary.innerHTML = data.analysis_summary || 'Keine zusammenfassende Analyse von der KI verfügbar.';
+
+                // Argumente rendern
+                renderArguments(data.pro_arguments || [], proList, 'green');
+                renderArguments(data.con_arguments || [], conList, 'red');
+                
+                outputSection.classList.remove('hidden'); 
+
+            } catch (error) {
+                console.error("Fehler bei der API-Anfrage:", error);
+                
+                let errorMessage = `Ein Fehler ist aufgetreten: ${error.message}.`;
+                
+                if (error.message.includes('Authentifizierung oder Zugriff verweigert')) {
+                     errorMessage = `<span class="font-bold">Authentifizierungsfehler (Code 401/403):</span> Das Problem liegt in der Umgebungskonfiguration. Der API-Schlüssel ist ungültig oder fehlt.`;
+                } else if (error.message.includes('Parsing')) {
+                     errorMessage = `FEHLER: Die KI konnte die Antwort nicht im korrekten TEXT-Format zurückgeben. Die Marker SCORE:, SUMMARY:, PRO_ARGUMENTS: und CONTRA_ARGUMENTS: wurden nicht gefunden.`;
+                }
+
+                statusMessage.innerHTML = errorMessage;
+                proList.innerHTML = `<li class="p-3 rounded-lg shadow-sm border border-red-300 border-opacity-30 bg-red-50 text-gray-500 italic">Fehler beim Laden.</li>`;
+                conList.innerHTML = `<li class="p-3 rounded-lg shadow-sm border border-red-300 border-opacity-30 bg-red-50 text-gray-500 italic">Fehler beim Laden.</li>`;
+                analysisSummary.innerHTML = 'Fehler beim Abrufen der Ergebnisse.';
+            } finally {
+                // UI-Status zurücksetzen
+                sendButton.disabled = false;
+                loadingIndicator.classList.add('hidden');
+            }
+        }
+        
+        /**
+         * Hilfsfunktion zum Rendern der Pro/Contra-Argumente (verarbeitet String-Array)
+         */
+        function renderArguments(argumentsList, targetElement, color) {
+            targetElement.innerHTML = ''; 
+            const baseClasses = `p-3 rounded-lg shadow-lg`;
+            const colorClasses = color === 'green' ? 'bg-green-100 border-l-4 border-green-500' : 'bg-red-100 border-l-4 border-red-500';
+            
+            if (!argumentsList || argumentsList.length === 0) {
+                targetElement.innerHTML = `<li class="text-gray-500 italic ${baseClasses} bg-white border border-gray-200">Keine Argumente gefunden.</li>`;
+                return;
+            }
+
+            argumentsList.forEach(argString => {
+                const li = document.createElement('li');
+                li.className = `${baseClasses} ${colorClasses} text-sm`;
+                
+                // Das Argument (String) wird direkt als Hauptinhalt verwendet
+                li.innerHTML = `<p class="font-medium text-gray-800 whitespace-pre-wrap">${argString}</p>`;
+                
+                targetElement.appendChild(li);
+            });
+        }
+
+
+        /**
+         * Hilfsfunktion für den API-Aufruf mit exponentiellem Backoff zur Fehlerbehandlung.
+         */
+        async function fetchWithRetry(url, options, maxRetries = 3) {
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    
+                    if (response.status === 401 || response.status === 403) {
+                        throw new Error(`HTTP-Fehler ${response.status}: Authentifizierung oder Zugriff verweigert.`);
+                    }
+
+                    if (response.status === 429 && i < maxRetries - 1) {
+                        const delay = Math.pow(2, i) * 1000; 
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        continue; 
+                    }
+                    if (!response.ok) {
+                        const errorBody = await response.text();
+                        throw new Error(`HTTP-Fehler ${response.status}: ${errorBody.substring(0, 100)}...`);
+                    }
+                    return response;
+                } catch (error) {
+                    if (i === maxRetries - 1) {
+                        throw error;
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
