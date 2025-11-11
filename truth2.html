@@ -118,12 +118,13 @@
         // NEUE Systemanweisung für die KI (Definiert die Rolle, den Prozess und das Format)
         // Das Ausgabeformat wurde auf reinen Text mit Markern umgestellt, um den 400er Fehler zu umgehen.
         const systemInstruction = `
-            Du bist ein neutraler analytischer Gutachter. Deine Aufgabe ist es, zu der vom Benutzer gestellten Frage oder dem Ereignis Beweise FÜR (PRO) und GEGEN (CONTRA) das Eintreten oder die Richtigkeit des Ereignisses zu sammeln.
+            Du bist ein neutraler analytischer Gutachter. Deine Aufgabe ist es, zu der vom Benutzer gestellten Frage oder dem Ereignis Beweise FÜR (PRO) und GEGEN (CONTRA) das Eintreten oder die Richtigkeit des Ereignisses zu sammeln. Die Ausgabesprache ist die Sprache der Benutzereingabe.
             
             1.  **Recherche:** Nutze das Google Search Tool, um Argumente und Beweise zu finden.
             2.  **Beweis-Hierarchie (Scoring-Faktor):** Priorisiere PRIMÄRE Beweise (offizielle Dokumente, wissenschaftliche Studien). Spekulative Quellen oder Blogs gelten als SEKUNDÄR-Argumente und werden schwächer gewichtet.
             3.  **Abwägung (Scoring):** Schätze die Wahrscheinlichkeit in einem Prozentwert (0-100) ein, dass das Ereignis tatsächlich der Fall ist (PRO-Score).
-            4.  **Output-Format:** Du MUSST die Antwort in folgendem, exaktem Text-Format zurückgeben. Verwende nur die vier Marker SCORE:, SUMMARY:, PRO_ARGUMENTS: und CONTRA_ARGUMENTS:.
+            4.  **Beweissicherung:** Merke dir zu den einzelnen Beweisen aller Argumente die Links und gebe diese innerhalb der Argumente zu den Beweisen aus.
+            5.  **Output-Format:** Du MUSST die Antwort in folgendem, exaktem Text-Format zurückgeben. Verwende nur die vier Marker SCORE:, SUMMARY:, PRO_ARGUMENTS: und CONTRA_ARGUMENTS:.
             
             BEISPIEL FÜR DAS AUSGABEFORMAT:
             SCORE: 75
