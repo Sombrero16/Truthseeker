@@ -149,53 +149,37 @@
                 pro_arguments: [],
                 con_arguments: []
             };
-        
-            // 1. SCORE extrahieren
+
+            // 1. Score extrahieren
             const scoreMatch = rawText.match(/SCORE:\s*(\d+)/i);
             if (scoreMatch && scoreMatch[1]) {
                 data.pro_score_percentage = parseInt(scoreMatch[1], 10);
             }
-        
-            // 2. SUMMARY extrahieren
+
+            // 2. Summary extrahieren
             const summaryMatch = rawText.match(/SUMMARY:\s*([\s\S]*?)(?:PRO_ARGUMENTS:|$)/i);
             if (summaryMatch && summaryMatch[1]) {
                 data.analysis_summary = summaryMatch[1].trim();
             } else {
                 data.analysis_summary = "Zusammenfassung konnte nicht extrahiert werden.";
             }
-        
-            // 3. PRO-ARGUMENTS extrahieren
+
+            // 3. Argumente extrahieren (zwischen den Markern)
             const proArgsMatch = rawText.match(/PRO_ARGUMENTS:\s*([\s\S]*?)CONTRA_ARGUMENTS:/i);
             if (proArgsMatch && proArgsMatch[1]) {
-                data.pro_arguments = proArgsMatch[1]
-                    .split('\n')
-                    .map(line => line.trim().replace(/^- /, ''))
-                    .filter(line => line.length > 0)
-                    .map(line => {
-                        const linkMatch = line.match(/\[([^\]]+)\]/);
-                        return {
-                            text: line.replace(/\s*\[[^\]]+\]\s*$/, '').trim(),
-                            link: linkMatch ? linkMatch[1] : null
-                        };
-                    });
+                // Argumente nach Zeilenumbrüchen teilen und leere oder reine Marker-Einträge entfernen
+                data.pro_arguments = proArgsMatch[1].split('\n')
+                    .map(line => line.trim().replace(/^- /, '')) // Bindestrich entfernen
+                    .filter(line => line.length > 0);
             }
-        
-            // 4. CONTRA-ARGUMENTS extrahieren
+
             const conArgsMatch = rawText.match(/CONTRA_ARGUMENTS:\s*([\s\S]*)/i);
             if (conArgsMatch && conArgsMatch[1]) {
-                data.con_arguments = conArgsMatch[1]
-                    .split('\n')
-                    .map(line => line.trim().replace(/^- /, ''))
-                    .filter(line => line.length > 0)
-                    .map(line => {
-                        const linkMatch = line.match(/\[([^\]]+)\]/);
-                        return {
-                            text: line.replace(/\s*\[[^\]]+\]\s*$/, '').trim(),
-                            link: linkMatch ? linkMatch[1] : null
-                        };
-                    });
+                data.con_arguments = conArgsMatch[1].split('\n')
+                    .map(line => line.trim().replace(/^- /, '')) // Bindestrich entfernen
+                    .filter(line => line.length > 0);
             }
-        
+
             return data;
         }
 
