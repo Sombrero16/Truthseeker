@@ -130,11 +130,11 @@
             SCORE: 75
             SUMMARY: Die Analyse zeigt eine moderate Wahrscheinlichkeit. Offizielle Berichte stützen die Pro-Seite, jedoch stellen glaubwürdige Sekundärquellen die These infrage. Das Ergebnis ist daher nicht eindeutig.
             PRO_ARGUMENTS:
-            - Offizielle Flugberichte bestätigen ungewöhnlich starke Windböen zum Zeitpunkt des Vorfalls (Offizieller Bericht: NOAA-Studie).
-            - Ein Gutachten erklärt die Schiffsverluste mit starken, plötzlichen Strömungsänderungen (Wissenschaftliche Studie: Oceanographic Journal).
+            - Offizielle Flugberichte bestätigen ungewöhnlich starke Windböen zum Zeitpunkt des Vorfalls (Offizieller Bericht: NOAA-Studie) [www.NOAA-Studie.com/Studie/2021].
+            - Ein Gutachten erklärt die Schiffsverluste mit starken, plötzlichen Strömungsänderungen (Wissenschaftliche Studie: Oceanographic Journal) [www.OceanographicJournal.com/Artikel-223].
             CONTRA_ARGUMENTS:
-            - Statistische Analysen zeigen keine signifikant höhere Verlustrate als in anderen Regionen mit ähnlichem Verkehr (Fehlende Dokumentation: University of Miami Report).
-            - Die ursprüngliche Mythenbildung wird auf einen Zeitungsartikel aus den 1960er Jahren zurückgeführt (Sekundärquelle: History Channel Dokumentation).
+            - Statistische Analysen zeigen keine signifikant höhere Verlustrate als in anderen Regionen mit ähnlichem Verkehr (Fehlende Dokumentation: University of Miami Report) [www.UM/Report].
+            - Die ursprüngliche Mythenbildung wird auf einen Zeitungsartikel aus den 1960er Jahren zurückgeführt (Sekundärquelle: History Channel Dokumentation) [www.HistoryChannel/Documentation].
         `;
         
         // Die responseSchema-Variable wird nun ignoriert, da wir auf Text umstellen.
@@ -149,37 +149,53 @@
                 pro_arguments: [],
                 con_arguments: []
             };
-
-            // 1. Score extrahieren
+        
+            // 1. SCORE extrahieren
             const scoreMatch = rawText.match(/SCORE:\s*(\d+)/i);
             if (scoreMatch && scoreMatch[1]) {
                 data.pro_score_percentage = parseInt(scoreMatch[1], 10);
             }
-
-            // 2. Summary extrahieren
+        
+            // 2. SUMMARY extrahieren
             const summaryMatch = rawText.match(/SUMMARY:\s*([\s\S]*?)(?:PRO_ARGUMENTS:|$)/i);
             if (summaryMatch && summaryMatch[1]) {
                 data.analysis_summary = summaryMatch[1].trim();
             } else {
                 data.analysis_summary = "Zusammenfassung konnte nicht extrahiert werden.";
             }
-
-            // 3. Argumente extrahieren (zwischen den Markern)
+        
+            // 3. PRO-ARGUMENTS extrahieren
             const proArgsMatch = rawText.match(/PRO_ARGUMENTS:\s*([\s\S]*?)CONTRA_ARGUMENTS:/i);
             if (proArgsMatch && proArgsMatch[1]) {
-                // Argumente nach Zeilenumbrüchen teilen und leere oder reine Marker-Einträge entfernen
-                data.pro_arguments = proArgsMatch[1].split('\n')
-                    .map(line => line.trim().replace(/^- /, '')) // Bindestrich entfernen
-                    .filter(line => line.length > 0);
+                data.pro_arguments = proArgsMatch[1]
+                    .split('\n')
+                    .map(line => line.trim().replace(/^- /, ''))
+                    .filter(line => line.length > 0)
+                    .map(line => {
+                        const linkMatch = line.match(/\[([^\]]+)\]/);
+                        return {
+                            text: line.replace(/\s*\[[^\]]+\]\s*$/, '').trim(),
+                            link: linkMatch ? linkMatch[1] : null
+                        };
+                    });
             }
-
+        
+            // 4. CONTRA-ARGUMENTS extrahieren
             const conArgsMatch = rawText.match(/CONTRA_ARGUMENTS:\s*([\s\S]*)/i);
             if (conArgsMatch && conArgsMatch[1]) {
-                data.con_arguments = conArgsMatch[1].split('\n')
-                    .map(line => line.trim().replace(/^- /, '')) // Bindestrich entfernen
-                    .filter(line => line.length > 0);
+                data.con_arguments = conArgsMatch[1]
+                    .split('\n')
+                    .map(line => line.trim().replace(/^- /, ''))
+                    .filter(line => line.length > 0)
+                    .map(line => {
+                        const linkMatch = line.match(/\[([^\]]+)\]/);
+                        return {
+                            text: line.replace(/\s*\[[^\]]+\]\s*$/, '').trim(),
+                            link: linkMatch ? linkMatch[1] : null
+                        };
+                    });
             }
-
+        
             return data;
         }
 
