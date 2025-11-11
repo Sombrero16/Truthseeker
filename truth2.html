@@ -171,10 +171,7 @@
                 data.pro_arguments = proArgsMatch[1].split('\n')
                     .map(line => line.trim().replace(/^- /, '')) // Bindestrich entfernen
                     .filter(line => line.length > 0);
-                    .map(arg => arg.replace(
-                        /\[([^\]]+)\]/g,
-                        '<a href="https://$1" target="_blank">$1</a>'
-                    ));
+                    .map(arg => arg.replace(/\[([^\]]+)\]/g, '<a href="https://$1" target="_blank">$1</a>'));
             }
 
             const conArgsMatch = rawText.match(/CONTRA_ARGUMENTS:\s*([\s\S]*)/i);
@@ -182,10 +179,7 @@
                 data.con_arguments = conArgsMatch[1].split('\n')
                     .map(line => line.trim().replace(/^- /, '')) // Bindestrich entfernen
                     .filter(line => line.length > 0);
-                    .map(arg => arg.replace(
-                        /\[([^\]]+)\]/g,
-                        '<a href="https://$1" target="_blank">$1</a>'
-                    ));
+                    .map(arg => arg.replace(/\[([^\]]+)\]/g, '<a href="https://$1" target="_blank">$1</a>'));
             }
 
             return data;
