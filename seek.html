@@ -23,9 +23,9 @@
 <body class="min-h-screen flex items-center justify-center p-4 transition-colors duration-300">
 
     <div class="w-full max-w-3xl bg-white shadow-xl rounded-2xl p-6 md:p-10 border border-gray-100 
-                dark:bg-gray-800 dark:shadow-2xl dark:border-gray-700 transition-colors duration-300">
+            dark:bg-gray-800 dark:shadow-2xl dark:border-gray-700 transition-colors duration-300">
         <header class="text-center mb-8 relative">
-            
+           
             <!-- THEME TOGGLE BUTTON -->
             <button id="themeToggle" class="absolute right-0 top-0 p-2 rounded-full text-gray-500 hover:text-indigo-600 
                                             dark:text-gray-400 dark:hover:text-indigo-400 transition duration-150">
@@ -38,7 +38,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                 </svg>
             </button>
-            
+           
             <h1 class="text-3xl font-bold text-indigo-700 dark:text-indigo-400 transition-colors duration-300">AI Idea Assistant</h1>
             <p class="text-gray-500 mt-2 dark:text-gray-400 transition-colors duration-300">Generiert Ideen und begrenzt den Zugriff, um Ihre API-Kosten zu schützen.</p>
         </header>
@@ -79,7 +79,7 @@
         const themeToggle = document.getElementById('themeToggle');
         const sunIcon = document.getElementById('sunIcon');
         const moonIcon = document.getElementById('moonIcon');
-        
+       
         function toggleDarkMode() {
             if (root.classList.contains('dark')) {
                 // Wechsel zu Light Mode
@@ -100,7 +100,7 @@
             const savedTheme = localStorage.getItem('theme');
             // Standardmäßig den System-Modus verwenden, falls keine Präferenz gespeichert ist
             const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            
+           
             if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
                 root.classList.add('dark');
                 sunIcon.classList.add('hidden');
@@ -111,7 +111,7 @@
                 moonIcon.classList.add('hidden');
             }
         }
-        
+       
         // Initialisiere das Theme beim Laden der Seite
         document.addEventListener('DOMContentLoaded', initializeTheme);
         themeToggle.addEventListener('click', toggleDarkMode);
@@ -121,6 +121,9 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, setLogLevel, doc, getDoc, updateDoc, setDoc, serverTimestamp, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // *** NEUER IMPORT ***
+        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js";
+
 
         // --- GLOBAL SETUP (MANDATORY) ---
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
@@ -129,6 +132,8 @@
 
         let db = null;
         let auth = null;
+        let functions = null; // *** HINZUGEFÜGT ***
+        let callGeminiApiProxy = null; // *** HINZUGEFÜGT ***
         let isAuthReady = false;
         let userId = null;
 
@@ -137,6 +142,11 @@
             const app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
+            functions = getFunctions(app); // *** HINZUGEFÜGT ***
+
+            // *** HINZUGEFÜGT: Referenz zur Cloud Function ***
+            callGeminiApiProxy = httpsCallable(functions, 'callGeminiApiProxy');
+
         }
 
         async function authenticateUser() {
@@ -163,11 +173,12 @@
 
         // --- API & RATE LIMITING LOGIC ---
 
-        // WICHTIG: Der API-Schlüssel MUSS auf einen sicheren Backend-Endpunkt umgestellt werden!
-        // Der hier definierte API-Aufruf ist nur eine SIMULATION des Backend-Aufrufs.
+        // Der Modellname wird jetzt an die Cloud Function übergeben
         const modelName = "gemini-2.5-flash-preview-09-2025";
-        const apiKey = "AIzaSyCMBBXxI93O2BBtARW8HRG3pWSndP_Nd-E"; // AUF KEINEN FALL IM PRODUKTIVSYSTEM VERWENDEN!
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+
+        // *** ENTFERNT ***
+        // const apiKey = "..." 
+        // const apiUrl = "..."
 
         const DAILY_LIMIT = 10; // Maximal 10 Aufrufe pro 24 Stunden
         const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -181,7 +192,7 @@
 
         /**
          * Prüft die Nutzungsbeschränkung des Benutzers in Firestore und erhöht den Zähler.
-         * @returns {boolean} True, wenn der Aufruf erlaubt ist, False, wenn das Limit erreicht wurde.
+         * (Diese Funktion bleibt unverändert)
          */
         async function checkAndIncrementUsage() {
             if (!db || !userId) {
@@ -233,45 +244,33 @@
             }
         }
 
-        // Simuliert den Backend-Aufruf, der den API-Schlüssel sicher hinzufügen würde.
-        // BEI ECHTER IMPLEMENTIERUNG MÜSSTE DIES DURCH EINEN AUFRUF IHRER FIREBASE FUNCTION ERSETZT WERDEN.
-        async function callGeminiApi(userQuery, retries = 0) {
-            // WICHTIG: DIESER AUFRUF IST UNSICHER UND DIENT NUR ZUM TESTEN.
-            // Ersetzen Sie dies durch einen Aufruf Ihrer Firebase Function, sobald diese eingerichtet ist.
-
-            const systemPrompt = "You are a creative and helpful idea assistant. Respond directly to the user's request with a compelling, well-structured, and original output. Format your response clearly using Markdown.";
-
-            const payload = {
-                contents: [{ parts: [{ text: userQuery }] }],
-                systemInstruction: { parts: [{ text: systemPrompt }] },
-            };
-
-            // Simuliere den Aufruf, da der Schlüssel im Frontend unsicher ist.
-            if (apiKey === "YOUR_GEMINI_API_KEY") {
-                 return "SIMULATION: Der Aufruf wäre erfolgreich, aber die API-Anfrage wurde blockiert, da der Schlüssel im Frontend unsicher ist. Bitte ersetzen Sie diesen Aufruf durch Ihren Backend-Proxy (Firebase Function) und entfernen Sie den 'apiKey' aus diesem Code!";
-            }
+        // *** KOMPLETT ÜBERARBEITET ***
+        /**
+         * Ruft die sichere Firebase Cloud Function (Proxy) auf.
+         * @param {string} userQuery Die Benutzereingabe.
+         * @returns {Promise<string>} Der vom Modell generierte Text.
+         */
+        async function callGeminiApi(userQuery) {
             
-            // Unsicherer API-Aufruf (zum Testen in der Canvas Umgebung)
+            if (!callGeminiApiProxy) {
+                 return "FEHLER: Die Firebase Cloud Function-Referenz ist nicht initialisiert.";
+            }
+
             try {
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                // Übergebe die notwendigen Daten an die Cloud Function
+                const result = await callGeminiApiProxy({ 
+                    userQuery: userQuery,
+                    modelName: modelName 
                 });
                 
-                if (!response.ok) {
-                     throw new Error(`API call failed with status: ${response.status}. Details: ${await response.text()}`);
-                }
-
-                const result = await response.json();
-                const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                return text || "Error: No text generated by the model.";
+                // 'result.data' enthält das Objekt, das wir von der Funktion zurückgegeben haben
+                return result.data.generatedText;
 
             } catch (error) {
-                console.error("Gemini API request error:", error);
-                return `Ein Fehler ist aufgetreten (Fehlercode 403, wenn Schlüssel fehlt): ${error.message}`;
+                console.error("Cloud Function-Aufruffehler:", error);
+                // 'error.message' enthält die Fehlermeldung, die von der Funktion geworfen wurde
+                return `Ein Fehler ist aufgetreten: ${error.message}`;
             }
-            
         }
 
         async function generateIdea() {
@@ -280,12 +279,17 @@
                 return;
             }
 
+            if (!firebaseConfig) {
+                 outputArea.textContent = "FEHLER: Firebase-Konfiguration nicht gefunden. App kann nicht ausgeführt werden.";
+                 return;
+            }
+
             const userQuery = userPromptEl.value.trim();
             if (userQuery === "") {
                 outputArea.textContent = "Bitte geben Sie eine Eingabeaufforderung ein, um eine Idee zu generieren.";
                 return;
             }
-            
+           
             // 1. Nutzungsprüfung durchführen und Zähler erhöhen
             const isAllowed = await checkAndIncrementUsage();
             if (!isAllowed) {
@@ -301,7 +305,7 @@
             outputArea.textContent = "Verarbeitung Ihrer Anfrage... (Prüfung bestanden!)";
             outputArea.classList.add('animate-pulse');
 
-            // 2. Simulierte API-Generierung (muss im Backend erfolgen!)
+            // 2. Sicherer API-Aufruf über die Cloud Function
             const generatedText = await callGeminiApi(userQuery);
 
             // UI zurücksetzen
@@ -309,7 +313,7 @@
             generateBtn.disabled = false;
             loadingSpinner.classList.add('hidden');
             buttonText.textContent = "Idee generieren";
-            
+           
             // Ausgabe anzeigen
             outputArea.textContent = generatedText;
         }
