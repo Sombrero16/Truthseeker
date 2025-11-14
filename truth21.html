@@ -457,9 +457,8 @@
                         return `<a href="${fullUrl}" target="_blank" class="text-indigo-400 hover:text-indigo-300 underline font-semibold transition-colors duration-200"> [Quelle]</a>`;
                     }
                 );
-                
-                // Annahme: Sie fügen htmlContent dann dem li-Element hinzu, z.B. li.innerHTML = htmlContent;
-                // ...
+                li.innerHTML = htmlContent; // Fügt den Text und den HTML-Link hinzu
+                parentElement.appendChild(li); // Fügt das li-Element der Liste hinzu
             });
                 
                 // Die Argument-Struktur erstellen
