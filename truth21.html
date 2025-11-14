@@ -449,14 +449,18 @@
                             // ohne klickbaren Link zurück.
                             return ''; 
                         }
-        
+            
                         // Fügt das Protokoll hinzu, falls es fehlt (Vermeidung von Fehlern bei relativen Pfaden)
                         const fullUrl = cleanedUrl.startsWith('http') ? cleanedUrl : `https://${cleanedUrl}`;
                         
-                        // Gibt den klickbaren Link im gewünschten Format zurück
+                        // ✨ ÄNDERUNG: Anzeigen von "[Quelle]" anstelle des Link-Namens/Fragments.
                         return `<a href="${fullUrl}" target="_blank" class="text-indigo-400 hover:text-indigo-300 underline font-semibold transition-colors duration-200"> [Quelle]</a>`;
                     }
                 );
+                
+                // Annahme: Sie fügen htmlContent dann dem li-Element hinzu, z.B. li.innerHTML = htmlContent;
+                // ...
+            });
                 
                 // Die Argument-Struktur erstellen
                 li.innerHTML = `<p class="font-medium ${textColor} whitespace-pre-wrap">${htmlContent}</p>`;
