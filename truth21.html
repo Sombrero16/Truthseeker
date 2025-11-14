@@ -160,7 +160,7 @@
             1.  **Research & Source Hierarchy (Tier 1 Priority):** Weight evidence based on credibility. Prioritize primary sources: **peer-reviewed scientific papers, official government documents, reproducible experimental results, and police/audit reports (Tier 1)**. 
             2.  **Source Tier 3 (0 Weight):** Disregard anecdotal evidence and sources identified as highly biased, sensational, or purely speculative (Tier 3 sources get 0 weight in the score calculation).
             3.  **Assessment (Scoring):** Estimate the probability in a percentage value (0-100) that the event is actually the case (PRO Score). **If the 'PRO' evidence relies solely on Tier 3 sources and contradicts established scientific consensus, the PRO score must tend towards 0% (e.g., 0-5%).**
-            4.  **Separation & Links:** The PRO and CONTRA arguments must be strictly separate. For every piece of evidence, provide the source name and the link in brackets [full URL].
+            4.  **Separation & Links:** The PRO and CONTRA arguments must be strictly separate. For every piece of evidence, provide the source name and the link in brackets [full URL]. If the argument is based on a retrieved source, you MUST take the URL directly from the corresponding search result used for grounding this argument and insert it exactly in the format [full URL] at the end of the evidence line.
             5.  **Output Format:** You MUST return the response in the following exact text format. Use only the four markers SCORE:, SUMMARY:, PRO_ARGUMENTS:, and CONTRA_ARGUMENTS:.
                     
             EXAMPLE OUTPUT FORMAT (The content language must match the user's input language):
@@ -427,13 +427,25 @@
 
             argumentsList.forEach(argString => {
                 const li = document.createElement('li');
-                li.className = `${baseClasses} ${colorClasses}`;
+                // ... (Klassenzuweisung bleibt gleich) ...
                 
-                // The argument (string) is used directly as the main content
-                li.innerHTML = `<p class="font-medium ${textColor} whitespace-pre-wrap">${argString}</p>`;
+                // REGEX zur Erkennung und Umwandlung von URLs im Format [URL]
+                const htmlContent = argString.replace(
+                    /\[(http[s]?:\/\/.+?|www\..+?)\]/g, 
+                    (match, url) => {
+                        // Füge "https://" hinzu, falls es fehlt (für korrekte absolute Links)
+                        const fullUrl = url.startsWith('http') ? url : `https://${url}`;
+                        // Erstelle das klickbare Anker-Tag (öffnet im neuen Tab)
+                        return `<a href="${fullUrl}" target="_blank" class="text-indigo-400 hover:text-indigo-300 underline font-semibold transition-colors duration-200"> [Link]</a>`;
+                    }
+                );
+        
+                li.innerHTML = `<p class="font-medium ${textColor} whitespace-pre-wrap">${htmlContent}</p>`;
                 
                 targetElement.appendChild(li);
             });
+
+            
         }
 
 
