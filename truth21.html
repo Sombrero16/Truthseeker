@@ -426,26 +426,23 @@
             }
 
             argumentsList.forEach(argString => {
-                const li = document.createElement('li');
-                // ... (Klassenzuweisung bleibt gleich) ...
-                
-                // REGEX zur Erkennung und Umwandlung von URLs im Format [URL]
-                const htmlContent = argString.replace(
-                    /\[(http[s]?:\/\/.+?|www\..+?)\]/g, 
-                    (match, url) => {
-                        // Füge "https://" hinzu, falls es fehlt (für korrekte absolute Links)
-                        const fullUrl = url.startsWith('http') ? url : `https://${url}`;
-                        // Erstelle das klickbare Anker-Tag (öffnet im neuen Tab)
-                        return `<a href="${fullUrl}" target="_blank" class="text-indigo-400 hover:text-indigo-300 underline font-semibold transition-colors duration-200"> [Link]</a>`;
-                    }
-                );
-        
-                li.innerHTML = `<p class="font-medium ${textColor} whitespace-pre-wrap">${htmlContent}</p>`;
-                
-                targetElement.appendChild(li);
-            });
-
+                    const li = document.createElement('li');
+                    // 2. Die fehlende Zuweisung der Farbklassen (Fehlerbehebung!)
+                    li.className = `${baseClasses} ${colorClasses}`; 
+                    
+                    // Link-Parsing-Logik
+                    const htmlContent = argString.replace(
+                        /\[(http[s]?:\/\/.+?|www\..+?)\]/g, 
+                        (match, url) => {
+                            const fullUrl = url.startsWith('http') ? url : `https://${url}`;
+                            return `<a href="${fullUrl}" target="_blank" class="text-indigo-400 hover:text-indigo-300 underline font-semibold transition-colors duration-200"> [Source]</a>`;
+                        }
+                    );
             
+                    li.innerHTML = `<p class="font-medium ${textColor} whitespace-pre-wrap">${htmlContent}</p>`;
+                    
+                    targetElement.appendChild(li);
+                });
         }
 
 
