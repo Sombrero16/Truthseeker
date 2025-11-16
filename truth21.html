@@ -410,59 +410,27 @@
          * Adapted for Dark Mode colors.
          */
         function renderArguments(argumentsList, targetElement, color) {
-            targetElement.innerHTML = '';
-            
-            // --- Dark Mode Klassen-Definitionen ---
+            targetElement.innerHTML = ''; 
             const baseClasses = `p-3 rounded-lg shadow-lg text-sm`;
-            const textColor = 'text-gray-200'; // Heller Text für Dark Mode Argumente
             
-            // Bedingte Zuweisung der Farb- und Randklassen
-            const colorClasses = color === 'green'
-                ? 'bg-green-900 border-l-4 border-green-600'
+            // Dark Mode Color Classes
+            const colorClasses = color === 'green' 
+                ? 'bg-green-900 border-l-4 border-green-600' 
                 : 'bg-red-900 border-l-4 border-red-600';
             
-            // --- 1. Handling für leere Listen ---
+            const textColor = 'text-gray-200'; // Light text for dark mode arguments
+            
             if (!argumentsList || argumentsList.length === 0) {
                 targetElement.innerHTML = `<li class="text-gray-500 italic ${baseClasses} bg-gray-800 border border-gray-700">No arguments found.</li>`;
                 return;
             }
-        
-            // --- 2. Iteration und Rendering ---
+
             argumentsList.forEach(argString => {
                 const li = document.createElement('li');
-                li.className = `${baseClasses} ${colorClasses} mb-2`; // mb-2 für leichten Abstand zwischen Argumenten
+                li.className = `${baseClasses} ${colorClasses}`;
                 
-                // Link-Parsing-Logik mit Bereinigung für fehlerhafte Grounding URLs
-                // Sucht nach [ beliebiger Inhalt ] am Ende des Strings
-                const htmlContent = argString.replace(
-                    /\[(.*?)\]$/g, // Sucht die letzte geklammerte Sequenz am Ende
-                    (match, urlFragment) => {
-                        
-                        // --- BEREINIGUNGSLOGIK ---
-                        // Entfernt Metadaten wie Titel oder Kommata, die fälschlicherweise an die URL angehängt wurden.
-                        // Trennt den String am ersten Komma oder Leerzeichen.
-                        let cleanedUrl = urlFragment.split(',')[0].split(' ')[0].trim();
-                        
-                        // Wir stellen sicher, dass wir nur Links mit ausreichend Inhalt verarbeiten
-                        if (cleanedUrl.length < 5) {
-                            // Wenn der Link zu kurz oder ungültig ist, geben wir den Text des Arguments
-                            // ohne klickbaren Link zurück.
-                            return ''; 
-                        }
-            
-                        // Fügt das Protokoll hinzu, falls es fehlt (Vermeidung von Fehlern bei relativen Pfaden)
-                        const fullUrl = cleanedUrl.startsWith('http') ? cleanedUrl : `https://${cleanedUrl}`;
-                        
-                        // ✨ ÄNDERUNG: Anzeigen von "[Quelle]" anstelle des Link-Namens/Fragments.
-                        return `<a href="${fullUrl}" target="_blank" class="text-indigo-400 hover:text-indigo-300 underline font-semibold transition-colors duration-200"> [Quelle]</a>`;
-                    }
-                );
-                li.innerHTML = htmlContent; // Fügt den Text und den HTML-Link hinzu
-                parentElement.appendChild(li); // Fügt das li-Element der Liste hinzu
-            });
-                
-                // Die Argument-Struktur erstellen
-                li.innerHTML = `<p class="font-medium ${textColor} whitespace-pre-wrap">${htmlContent}</p>`;
+                // The argument (string) is used directly as the main content
+                li.innerHTML = `<p class="font-medium ${textColor} whitespace-pre-wrap">${argString}</p>`;
                 
                 targetElement.appendChild(li);
             });
