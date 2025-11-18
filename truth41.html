@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytical Research Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Set a pleasant standard font and dark background */
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #1f2937; /* Gray-800 for body background */
+            color: #d1d5db; /* Light gray text for default */
+        }
+        /* Uniform transitions for interaction */
+        button, textarea, #pro-bar, #contra-bar, #sidebar, #main-content-wrapper, a { 
+            transition: all 0.7s ease-in-out; 
+        }
+
+        /* Styling for the history sidebar */
+        #sidebar.expanded {
+            transform: translateX(0);
+        }
+        #main-content-wrapper.shifted {
+            margin-left: 16rem; /* Match sidebar width (w-64) */
+        }
+        .history-item {
+            cursor: pointer;
+            @apply hover:bg-gray-700 p-3 rounded-lg border border-gray-700 mb-2;
+        }
+    </style>
+</head>
+<body>
+
+    <aside id="sidebar" class="fixed top-0 left-0 w-64 h-full bg-gray-900 text-gray-300 shadow-2xl transform -translate-x-full transition-transform duration-300 ease-in-out z-20 overflow-y-auto p-4">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold text-white">Analysis History</h2>
+            <button onclick="toggleSidebar()" class="text-gray-400 hover:text-white focus:outline-none">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <div id="history-list" class="space-y-2">
+            <p id="no-history-message" class="text-gray-500 italic text-sm">No history yet.</p>
+        </div>
+    </aside>
+
+    <div id="main-content-wrapper" class="flex-1 min-h-screen relative">
+        
+        <button id="toggle-sidebar-button" onclick="toggleSidebar()" class="fixed top-4 left-4 p-2 bg-indigo-600 text-white rounded-full shadow-lg z-30 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:ring-opacity-50">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+        </button>
+     
+        <!-- Link to Truth42 (Top Right) -->
+        <a href="truth42.html" class="fixed top-4 right-4 flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-indigo-400 border border-indigo-500/30 rounded-full shadow-lg z-30 transition-all hover:scale-105 font-semibold text-sm group">
+            <span>Switch to Media Forensics</span>
+            <svg class="w-5 h-5 group-hover:text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+        </a>
+    
+        <div class="min-h-screen flex flex-col items-center p-4">
+            <header class="text-center mb-8 pt-10">
+                <h1 class="text-4xl font-extrabold text-white mb-2">Analytical Research Assistant</h1>
+                <p class="text-lg text-gray-400">Enter an event or topic. The AI searches for pro and contra evidence, weights them, and creates a probability score.</p>
+            </header>
+
+            <main class="w-full max-w-5xl bg-gray-900 p-8 rounded-xl shadow-2xl">
+
+                <section class="mb-8">
+                    <label for="input-text" class="block text-sm font-medium text-gray-300 mb-2">Event for Analysis (Input):</label>
+                    <textarea id="input-text" rows="4" 
+                        class="w-full p-3 border-2 border-indigo-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-white bg-gray-800 resize-none shadow-md"
+                        placeholder="For example: Is the Bermuda Triangle truly a site of unusually high vessel losses, or is it just a myth?"
+                    ></textarea>
+                    <div class="mt-4 flex justify-end">
+                        <button id="send-button" onclick="handleSearch()"
+                            class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-lg hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                            Start Analysis
+                        </button>
+                    </div>
+                </section>
+
+                <div id="status-message" class="text-center mb-4 text-sm font-medium text-red-400"></div>
+                <div id="loading-indicator" class="hidden text-center mb-6">
+                    <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] text-indigo-500" role="status">
+                        <span class="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">Analyzing Evidence...</span>
+                    </div>
+                    <p class="mt-2 text-indigo-400">The AI is researching and weighing the Pro and Con arguments...</p>
+                </div>
+
+                <section id="output-section" class="hidden">
+                    <h2 class="text-2xl font-bold text-white mb-4">Result & Assessment</h2>
+                    
+                    <div class="mb-8 p-4 bg-gray-800 rounded-xl shadow-inner border border-gray-700">
+                        <p class="font-semibold text-base text-gray-300 mb-3">Probability Score (PRO vs. CONTRA):</p>
+                        <div class="flex h-8 rounded-full overflow-hidden shadow-lg border border-gray-600 text-center">
+                            <div id="pro-bar" class="flex items-center justify-center bg-green-600 text-white font-extrabold text-xs px-2" style="width: 50%;">
+                                <span id="pro-percent">50% PRO</span>
+                            </div>
+                            <div id="contra-bar" class="flex items-center justify-center bg-red-600 text-white font-extrabold text-xs px-2" style="width: 50%;">
+                                <span id="contra-percent">50% CONTRA</span>
+                            </div>
+                        </div>
+                        <p class="mt-4 text-gray-400 italic font-medium">Summary Analysis:</p>
+                        <div id="analysis-summary" class="text-gray-200 p-3 bg-gray-700 rounded-lg whitespace-pre-wrap">The analysis summary will appear here, based on the strength of the found evidence.</div>
+                    </div>
+
+                    <div class="grid lg:grid-cols-2 gap-6 mt-6">
+                        <div>
+                            <h3 class="text-xl font-bold text-green-400 mb-3 flex items-center">
+                                <svg class="w-6 h-6 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                PRO Arguments (Evidence supporting the event)
+                            </h3>
+                            <ul id="pro-list" class="space-y-4 text-gray-200">
+                                </ul>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-red-400 mb-3 flex items-center">
+                                <svg class="w-6 h-6 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                CONTRA Arguments (Evidence against the event)
+                            </h3>
+                            <ul id="con-list" class="space-y-4 text-gray-200">
+                                </ul>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // NOTE: The API key must be valid for the code to function.
+        const apiKey = "AIzaSyCMBBXxI93O2BBtARW8HRG3pWSndP_Nd-E";
+        const API_MODEL = 'gemini-2.5-flash-preview-09-2025';
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODEL}:generateContent?key=${apiKey}`;
+        
+        // History constants
+        const HISTORY_KEY = 'analysisHistory';
+        const MAX_HISTORY_ITEMS = 10;
+
+        // UI Elements
+        const sidebarEl = document.getElementById('sidebar');
+        const mainWrapperEl = document.getElementById('main-content-wrapper');
+        const historyListEl = document.getElementById('history-list');
+        const noHistoryMessageEl = document.getElementById('no-history-message');
+        const inputEl = document.getElementById('input-text');
+        const sendButton = document.getElementById('send-button');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const statusMessage = document.getElementById('status-message');
+        const outputSection = document.getElementById('output-section');
+        const proBar = document.getElementById('pro-bar');
+        const contraBar = document.getElementById('contra-bar');
+        const proPercent = document.getElementById('pro-percent');
+        const contraPercent = document.getElementById('contra-percent');
+        const analysisSummary = document.getElementById('analysis-summary');
+        const proList = document.getElementById('pro-list');
+        const conList = document.getElementById('con-list');
+
+
+        // NEW System Instruction for the AI (Defines role, process, format, and language requirement)
+        const systemInstruction = `
+            You are a neutral, highly analytical research assistant and assessor. Your analysis must strictly adhere to the scientific method and source verification.
+        
+            **Core Principle:** Rely EXCLUSIVELY on the gathered search results (Google Search Tool) for all facts and analysis. Never use prior knowledge, especially for controversial topics.
+        
+            Your task is to gather evidence FOR (PRO) and AGAINST (CONTRA) the occurrence or correctness of the event or question posed by the user. Crucially, detect the language of the user's input and ensure the output language (SCORE, SUMMARY, and ARGUMENTS) matches that input language.
+            
+            1.  **Research & Source Hierarchy (Tier 1 Priority):** Weight evidence based on credibility. Prioritize primary sources: **peer-reviewed scientific papers, official government documents, reproducible experimental results, and police/audit reports (Tier 1)**. 
+            2.  **Source Tier 3 (0 Weight):** Disregard anecdotal evidence and sources identified as highly biased, sensational, or purely speculative (Tier 3 sources get 0 weight in the score calculation).
+            3.  **Assessment (Scoring):** Estimate the probability in a percentage value (0-100) that the event is actually the case (PRO Score). **If the 'PRO' evidence relies solely on Tier 3 sources and contradicts established scientific consensus, the PRO score must tend towards 0% (e.g., 0-5%).**
+            4.  **Separation & Links:** The PRO and CONTRA arguments must be strictly separate. For every piece of evidence, provide the source name and the link in brackets [full URL]. **You MUST include the full URL in brackets [full URL] at the very end of the evidence line.**
+            5.  **Output Format:** You MUST return the response in the following exact text format. Use only the four markers SCORE:, SUMMARY:, PRO_ARGUMENTS:, and CONTRA_ARGUMENTS:.
+                    
+            EXAMPLE OUTPUT FORMAT (The content language must match the user's input language):
+            SCORE: 75
+            SUMMARY: The analysis shows a moderate probability. Official reports support the Pro side, but credible secondary sources question the thesis. The result is therefore not unambiguous.
+            PRO_ARGUMENTS:
+            - Official flight reports confirm unusually strong wind shear at the time of the incident (Official Report: NOAA Study) [https://www.NOAA-Studie.com/Study/2021].
+            - An expert opinion explains the vessel losses with strong, sudden current changes (Scientific Study: Oceanographic Journal) [https://www.OceanographicJournal.com/Article-223].
+            CONTRA_ARGUMENTS:
+            - Statistical analyses show no significantly higher loss rate than in other regions with similar traffic (Missing Documentation: University of Miami Report) [https://www.UM/Report].
+            - The original myth formation is traced back to a newspaper article from the 1960s (Secondary Source: History Channel Documentation) [https://www.HistoryChannel/Documentation].
+        `;
+        
+        // --- HISTORY FUNCTIONS ---
+
+        /**
+         * Loads the history array from localStorage.
+         */
+        function loadHistory() {
+            try {
+                const historyString = localStorage.getItem(HISTORY_KEY);
+                const parsed = historyString ? JSON.parse(historyString) : [];
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (e) {
+                console.error("Could not load history from localStorage:", e);
+                return [];
+            }
+        }
+
+        /**
+         * Saves a new entry to the history and updates localStorage.
+         * @param {string} query The user's input query.
+         */
+        function saveHistory(query) {
+            const history = loadHistory();
+            const newEntry = { query: query, timestamp: new Date().toLocaleTimeString() };
+            
+            // Prepend new entry and truncate old ones
+            history.unshift(newEntry);
+            if (history.length > MAX_HISTORY_ITEMS) {
+                history.pop();
+            }
+
+            try {
+                localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+                renderHistory(history);
+            } catch (e) {
+                console.error("Could not save history to localStorage:", e);
+            }
+        }
+
+        /**
+         * Renders the history list in the sidebar.
+         * @param {Array<Object>} history The history array.
+         */
+        function renderHistory(history = loadHistory()) {
+            historyListEl.innerHTML = '';
+            if (!Array.isArray(history) || history.length === 0) {
+                noHistoryMessageEl.classList.remove('hidden');
+                return;
+            }
+            noHistoryMessageEl.classList.add('hidden');
+
+            history.forEach(entry => {
+                const itemEl = document.createElement('div');
+                itemEl.className = 'history-item bg-gray-800 text-gray-300';
+                itemEl.innerHTML = `<p class="font-semibold text-sm">${entry.query.substring(0, 50)}${entry.query.length > 50 ? '...' : ''}</p><span class="text-xs text-gray-500">${entry.timestamp}</span>`;
+                itemEl.onclick = () => {
+                    inputEl.value = entry.query;
+                    toggleSidebar(); // Close sidebar on selection
+                };
+                historyListEl.appendChild(itemEl);
+            });
+        }
+
+        /**
+         * Toggles the visibility of the history sidebar.
+         */
+        function toggleSidebar() {
+            sidebarEl.classList.toggle('expanded');
+            mainWrapperEl.classList.toggle('shifted');
+            if (sidebarEl.classList.contains('expanded')) {
+                renderHistory();
+            }
+        }
+
+        // Initialize history rendering on load
+        document.addEventListener('DOMContentLoaded', renderHistory);
+
+        // --- CORE APPLICATION LOGIC ---
+
+        /**
+         * Parses the plain text output from the AI into a structured object.
+         */
+        function extractDataFromText(rawText) {
+            const data = {
+                pro_score_percentage: 50,
+                analysis_summary: "Parsing Error: Could not extract data structure from AI text.",
+                pro_arguments: [],
+                con_arguments: []
+            };
+
+            // 1. Extract Score
+            const scoreMatch = rawText.match(/SCORE:\s*(\d+)/i);
+            if (scoreMatch && scoreMatch[1]) {
+                data.pro_score_percentage = parseInt(scoreMatch[1], 10);
+            }
+
+            // 2. Extract Summary
+            const summaryMatch = rawText.match(/SUMMARY:\s*([\s\S]*?)(?:PRO_ARGUMENTS:|$)/i);
+            if (summaryMatch && summaryMatch[1]) {
+                data.analysis_summary = summaryMatch[1].trim();
+            } else {
+                data.analysis_summary = "Summary could not be extracted.";
+            }
+
+            // 3. Extract Arguments (between markers)
+            const proArgsMatch = rawText.match(/PRO_ARGUMENTS:\s*([\s\S]*?)CONTRA_ARGUMENTS:/i);
+            if (proArgsMatch && proArgsMatch[1]) {
+                data.pro_arguments = proArgsMatch[1].split('\n')
+                    .map(line => line.trim().replace(/^- /, '')) // Remove leading hyphen
+                    .filter(line => line.length > 0);
+            }
+
+            const conArgsMatch = rawText.match(/CONTRA_ARGUMENTS:\s*([\s\S]*)/i);
+            if (conArgsMatch && conArgsMatch[1]) {
+                data.con_arguments = conArgsMatch[1].split('\n')
+                    .map(line => line.trim().replace(/^- /, '')) // Remove leading hyphen
+                    .filter(line => line.length > 0);
+            }
+
+            return data;
+        }
+
+
+        /**
+         * Executes the AI-powered search and assessment.
+         */
+        async function handleSearch() {
+            const userQuery = inputEl.value.trim();
+            if (!userQuery) {
+                statusMessage.textContent = "Please enter a question or a topic.";
+                return;
+            }
+
+            // Save query to history BEFORE API call
+            saveHistory(userQuery);
+
+            // Set UI status
+            statusMessage.textContent = '';
+            analysisSummary.innerHTML = 'The AI is processing your request and gathering evidence...';
+            sendButton.disabled = true;
+            loadingIndicator.classList.remove('hidden');
+            outputSection.classList.add('hidden');
+            
+            // Reset initial score display
+            proBar.style.width = '50%';
+            contraBar.style.width = '50%';
+            proPercent.textContent = '50% PRO';
+            contraPercent.textContent = '50% CONTRA';
+            proList.innerHTML = `<li class="p-3 rounded-lg shadow-sm border border-green-700 border-opacity-50 bg-gray-800 text-gray-400 italic">Loading...</li>`;
+            conList.innerHTML = `<li class="p-3 rounded-lg shadow-sm border border-red-700 border-opacity-50 bg-gray-800 text-gray-400 italic">Loading...</li>`;
+
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                tools: [{ "google_search": {} }],
+                systemInstruction: {
+                    parts: [{ text: systemInstruction }]
+                }
+            };
+            
+            try {
+                const response = await fetchWithRetry(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                const candidate = result.candidates?.[0];
+                
+                if (!candidate || !candidate.content?.parts?.[0]?.text) {
+                    throw new Error("Error: Could not receive a valid response from the AI.");
+                }
+
+                const rawText = candidate.content.parts[0].text;
+                const data = extractDataFromText(rawText);
+
+                // 1. Calculate Score and update bar
+                const proScore = Math.max(0, Math.min(100, data.pro_score_percentage || 50)); 
+                const conScore = 100 - proScore;
+
+                const proWidth = proScore <= 1 ? '1%' : `${proScore}%`; 
+                const conWidth = conScore <= 1 ? '1%' : `${conScore}%`; 
+
+                proBar.style.width = proWidth;
+                contraBar.style.width = conWidth;
+                
+                proPercent.textContent = `${proScore}% PRO`;
+                proPercent.style.color = proScore < 15 ? '#1f2937' : 'white'; 
+
+                contraPercent.textContent = `${conScore}% CONTRA`;
+                contraPercent.style.color = conScore < 15 ? '#1f2937' : 'white'; 
+
+                // Texts and Arguments
+                analysisSummary.innerHTML = data.analysis_summary || 'No summary analysis available from the AI.';
+
+                // Render arguments with icons
+                renderArguments(data.pro_arguments || [], proList, 'green');
+                renderArguments(data.con_arguments || [], conList, 'red');
+                
+                outputSection.classList.remove('hidden'); 
+
+            } catch (error) {
+                console.error("Error in API request:", error);
+                
+                let errorMessage = `An error occurred: ${error.message}.`;
+                if (error.message.includes('Authentication') || error.message.includes('401') || error.message.includes('403')) {
+                     errorMessage = `<span class="font-bold">Authentication Error (Code 401/403):</span> The problem lies in the environment configuration. The API key is invalid or missing.`;
+                }
+
+                statusMessage.innerHTML = errorMessage;
+                proList.innerHTML = `<li class="p-3 rounded-lg shadow-sm border border-red-700 border-opacity-50 bg-gray-800 text-gray-400 italic">Error loading.</li>`;
+                conList.innerHTML = `<li class="p-3 rounded-lg shadow-sm border border-red-700 border-opacity-50 bg-gray-800 text-gray-400 italic">Error loading.</li>`;
+                analysisSummary.innerHTML = 'Error fetching results.';
+            } finally {
+                sendButton.disabled = false;
+                loadingIndicator.classList.add('hidden');
+            }
+        }
+        
+        /**
+         * UPDATED: Helper function to render arguments.
+         * Now robustly detects URLs anywhere in the string and converts them to icons.
+         */
+        function renderArguments(argumentsList, targetElement, color) {
+            targetElement.innerHTML = ''; 
+            // Use flexbox to ensure the text and icon sit nicely side-by-side
+            const baseClasses = `p-3 rounded-lg shadow-lg text-sm flex justify-between items-start gap-4`;
+            
+            const colorClasses = color === 'green' 
+                ? 'bg-green-900 border-l-4 border-green-600' 
+                : 'bg-red-900 border-l-4 border-red-600';
+            
+            const textColor = 'text-gray-200'; 
+            
+            if (!argumentsList || argumentsList.length === 0) {
+                targetElement.innerHTML = `<li class="text-gray-500 italic p-3 rounded-lg shadow-lg text-sm bg-gray-800 border border-gray-700">No arguments found.</li>`;
+                return;
+            }
+
+            argumentsList.forEach(argString => {
+                const li = document.createElement('li');
+                li.className = `${baseClasses} ${colorClasses}`;
+                
+                // UPDATED REGEX: 
+                // 1. Searches for [http...] OR (http...) OR just http... at the end.
+                // 2. Is not anchored to the absolute end ($) to allow for punctuation.
+                const urlRegex = /\[?\s*((?:https?:\/\/|www\.)[^\s\]\)]+)\s*\]?\.?$/i;
+                
+                // We try to match the URL pattern
+                const match = argString.match(urlRegex);
+                let contentText = argString;
+                let linkHtml = '';
+
+                if (match) {
+                    const rawUrl = match[1]; // The actual URL
+                    let finalUrl = rawUrl;
+                    if (!finalUrl.startsWith('http')) {
+                        finalUrl = 'https://' + finalUrl;
+                    }
+
+                    // Remove the URL from the text so it doesn't look cluttered
+                    // We replace the entire matched string (brackets and all)
+                    contentText = argString.replace(match[0], '').trim();
+                    
+                    // Clean up any trailing punctuation left over (e.g. a comma or colon)
+                    if (contentText.endsWith('.') || contentText.endsWith(',') || contentText.endsWith(':')) {
+                        contentText = contentText.slice(0, -1);
+                    }
+
+                    // Create the clickable Chain Icon
+                    linkHtml = `
+                        <a href="${finalUrl}" target="_blank" rel="noopener noreferrer" 
+                           class="flex-shrink-0 p-2 bg-gray-800/50 hover:bg-gray-700 text-indigo-300 hover:text-white rounded-md transition-all border border-white/10 group mt-0.5" 
+                           title="Open Source: ${finalUrl}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                            </svg>
+                        </a>
+                    `;
+                }
+
+                li.innerHTML = `
+                    <div class="font-medium ${textColor} whitespace-pre-wrap leading-relaxed flex-grow">${contentText}</div>
+                    ${linkHtml}
+                `;
+                
+                targetElement.appendChild(li);
+            });
+        }
+
+        /**
+         * Helper function for the API call with exponential backoff.
+         */
+        async function fetchWithRetry(url, options, maxRetries = 3) {
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (response.status === 401 || response.status === 403) {
+                        throw new Error(`HTTP Error ${response.status}: Authentication or access denied.`);
+                    }
+                    if (response.status === 429 && i < maxRetries - 1) {
+                        const delay = Math.pow(2, i) * 1000; 
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        continue; 
+                    }
+                    if (!response.ok) {
+                        const errorBody = await response.text();
+                        throw new Error(`HTTP Error ${response.status}: ${errorBody.substring(0, 100)}...`);
+                    }
+                    return response;
+                } catch (error) {
+                    if (i === maxRetries - 1) {
+                        throw error;
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
