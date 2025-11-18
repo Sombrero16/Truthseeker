@@ -6,27 +6,34 @@
     <title>Truth42 - Forensic Analysis</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* Match Truth41 Design System */
         body { 
             font-family: 'Inter', system-ui, -apple-system, sans-serif; 
-            background-color: #0b1121; /* Darker Navy/Slate */
-            color: #e2e8f0; 
+            background-color: #1f2937; /* Gray-800 */
+            color: #d1d5db; /* Light Gray */
         }
         
+        /* Transitions match Truth41 */
+        button, a, .glass-panel, #output-panel, #left-panel { 
+            transition: all 0.7s ease-in-out; 
+        }
+
         /* Refined Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #0b1121; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
 
+        /* Updated Glass Panel to match Gray-900 aesthetics */
         .glass-panel {
-            background: rgba(30, 41, 59, 0.4);
+            background: rgba(17, 24, 39, 0.7); /* Gray-900 with opacity */
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
         }
 
         .btn-glow:hover:not(:disabled) {
-            box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+            box-shadow: 0 0 20px rgba(79, 70, 229, 0.4); /* Indigo glow */
         }
 
         /* Loading Bar Animation */
@@ -44,84 +51,97 @@
         }
         
         .drag-active {
-            border-color: #818cf8 !important;
-            background: rgba(99, 102, 241, 0.15) !important;
+            border-color: #6366f1 !important; /* Indigo-500 */
+            background: rgba(79, 70, 229, 0.15) !important;
         }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden selection:bg-indigo-500/30">
 
-    <!-- Compact Header -->
-    <nav class="w-full bg-[#0f172a]/90 border-b border-slate-800/60 px-6 py-3 flex justify-between items-center z-50 shrink-0 backdrop-blur-sm">
+    <!-- Header -->
+    <nav class="w-full bg-gray-900 border-b border-gray-700/50 px-6 py-3 flex justify-between items-center z-50 shrink-0 shadow-md">
         <div class="flex items-center gap-3">
             <div class="p-1.5 bg-indigo-500/10 rounded-md border border-indigo-500/20">
                 <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
             </div>
-            <h1 class="text-lg font-semibold tracking-tight text-white">Truth42 <span class="text-slate-500 font-normal text-sm ml-2">| AI Forensics</span></h1>
+            <h1 class="text-lg font-bold tracking-tight text-white">Truth42 <span class="text-gray-500 font-normal text-sm ml-2">| AI Forensics</span></h1>
         </div>
-        <div class="flex items-center gap-3 text-xs font-mono text-slate-500">
-            <span class="hidden sm:inline">Gemini 2.5 Flash</span>
-            <span class="w-2 h-2 rounded-full bg-green-500/80 shadow-[0_0_10px_rgba(34,197,94,0.4)] animate-pulse"></span>
+
+        <!-- Right Side: Navigation Button (Added) -->
+        <div class="flex items-center gap-4">
+            <!-- Link back to Truth41 -->
+            <a href="truth41.html" class="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-indigo-400 border border-indigo-500/30 rounded-full shadow-lg transition-all hover:scale-105 font-semibold text-sm group">
+                <span>Switch to Text Analysis</span>
+                <svg class="w-5 h-5 group-hover:text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+            </a>
+            
+            <!-- Gemini Status (Hidden on small screens to make room for button) -->
+            <div class="hidden md:flex items-center gap-3 text-xs font-mono text-gray-500 border-l border-gray-700 pl-4">
+                <span>Gemini 2.5 Flash</span>
+                <span class="w-2 h-2 rounded-full bg-green-500/80 shadow-[0_0_10px_rgba(34,197,94,0.4)] animate-pulse"></span>
+            </div>
         </div>
     </nav>
 
     <!-- Main Workspace -->
-    <main class="flex-1 relative flex overflow-hidden">
+    <main class="flex-1 relative flex overflow-hidden bg-[#1f2937]">
         
         <!-- Left Panel: Upload & Preview -->
-        <div class="flex-1 flex flex-col p-4 md:p-6 overflow-y-auto custom-scrollbar relative z-10 transition-all duration-500" id="left-panel">
+        <div class="flex-1 flex flex-col p-4 md:p-6 overflow-y-auto custom-scrollbar relative z-10" id="left-panel">
             
-            <div class="max-w-xl mx-auto w-full flex flex-col h-full justify-center">
+            <div class="max-w-2xl mx-auto w-full flex flex-col h-full justify-center">
                 
-                <!-- Compact Upload Zone -->
-                <div id="drop-zone" class="glass-panel rounded-xl border border-dashed border-slate-600/50 p-6 text-center cursor-pointer transition-all duration-300 hover:border-indigo-400/50 hover:bg-slate-800/30 group relative overflow-hidden min-h-[160px] flex flex-col justify-center items-center">
+                <!-- Compact Upload Zone (Styled to match Truth41 cards) -->
+                <div id="drop-zone" class="bg-gray-900 rounded-xl border-2 border-dashed border-gray-600 p-8 text-center cursor-pointer transition-all duration-300 hover:border-indigo-500 hover:bg-gray-800/80 group relative overflow-hidden min-h-[300px] flex flex-col justify-center items-center shadow-2xl">
                     
                     <input type="file" id="file-input" class="hidden" accept="image/png, image/jpeg, image/webp">
                     
                     <!-- Initial State Content -->
-                    <div id="upload-prompt" class="space-y-3 pointer-events-none transition-opacity duration-300">
-                        <div class="w-12 h-12 bg-slate-800/50 rounded-xl flex items-center justify-center mx-auto group-hover:scale-110 group-hover:bg-slate-800 transition-all border border-slate-700/50 group-hover:border-indigo-500/30 shadow-lg">
-                            <svg class="w-6 h-6 text-indigo-400/80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                    <div id="upload-prompt" class="space-y-4 pointer-events-none transition-opacity duration-300">
+                        <div class="w-16 h-16 bg-gray-800 rounded-2xl flex items-center justify-center mx-auto group-hover:scale-110 group-hover:bg-gray-700 transition-all border border-gray-700 group-hover:border-indigo-500/30 shadow-xl">
+                            <svg class="w-8 h-8 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                         </div>
                         <div>
-                            <p class="text-sm font-medium text-slate-200 group-hover:text-indigo-300 transition-colors">Click or Drop Image</p>
-                            <p class="text-[10px] uppercase tracking-widest text-slate-500 mt-1">JPG • PNG • WEBP</p>
+                            <p class="text-lg font-semibold text-gray-200 group-hover:text-indigo-300 transition-colors">Click or Drop Image to Analyze</p>
+                            <p class="text-xs uppercase tracking-widest text-gray-500 mt-2">JPG • PNG • WEBP</p>
                         </div>
                     </div>
 
                     <!-- Preview State -->
-                    <div id="preview-container" class="hidden absolute inset-0 bg-[#0b1121] flex flex-col items-center justify-center z-20">
-                        <div class="relative w-full h-full p-1">
-                            <img id="image-preview" class="w-full h-full object-contain rounded-lg opacity-0 transition-opacity duration-500" src="" alt="Preview">
+                    <div id="preview-container" class="hidden absolute inset-0 bg-gray-900 flex flex-col items-center justify-center z-20 p-4">
+                        <div class="relative w-full h-full flex items-center justify-center">
+                            <img id="image-preview" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl opacity-0 transition-opacity duration-500" src="" alt="Preview">
                             
                             <!-- Remove Button -->
-                            <button onclick="resetUpload(event)" class="absolute top-3 right-3 bg-black/40 hover:bg-red-500/80 text-white p-2 rounded-lg backdrop-blur-md border border-white/10 transition-all hover:scale-105 shadow-lg group/btn" title="Remove">
-                                <svg class="w-4 h-4 text-white/70 group-hover/btn:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            <button onclick="resetUpload(event)" class="absolute top-0 right-0 m-4 bg-black/50 hover:bg-red-600 text-white p-2 rounded-lg backdrop-blur-md border border-white/10 transition-all hover:scale-105 shadow-lg group/btn" title="Remove">
+                                <svg class="w-5 h-5 text-gray-200 group-hover/btn:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                             </button>
                         </div>
                     </div>
                 </div>
 
                 <!-- Action Area -->
-                <div class="mt-6 transition-all duration-300 opacity-0 translate-y-2" id="action-bar">
+                <div class="mt-8 transition-all duration-300 opacity-0 translate-y-2" id="action-bar">
                     <div class="flex justify-between items-center mb-3 px-1">
-                        <div class="text-xs font-mono text-indigo-300/60 truncate max-w-[250px]" id="filename-display">image.jpg</div>
-                        <div class="text-xs text-slate-500 transition-colors duration-300" id="status-text">Ready to scan</div>
+                        <div class="text-xs font-mono text-indigo-300/80 truncate max-w-[250px]" id="filename-display">image.jpg</div>
+                        <div class="text-xs text-gray-400 transition-colors duration-300" id="status-text">Ready to scan</div>
                     </div>
 
                     <!-- Button Container -->
-                    <div class="relative h-12 w-full">
+                    <div class="relative h-14 w-full">
                         <!-- Scan Button -->
                         <button id="analyze-btn" onclick="handleAnalysis()" disabled
-                            class="btn-glow absolute inset-0 w-full h-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-sm font-semibold rounded-lg shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 z-20">
+                            class="btn-glow absolute inset-0 w-full h-full bg-indigo-600 hover:bg-indigo-700 text-white text-base font-bold rounded-lg shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 z-20">
                             <span>Run Forensic Scan</span>
-                            <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                            <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                         </button>
 
                         <!-- Progress Bar Container -->
-                        <div id="progress-container" class="hidden absolute inset-0 w-full h-full bg-slate-800 rounded-lg overflow-hidden border border-slate-700 z-10">
+                        <div id="progress-container" class="hidden absolute inset-0 w-full h-full bg-gray-800 rounded-lg overflow-hidden border border-gray-700 z-10">
                             <div id="progress-fill" class="h-full bg-gradient-to-r from-indigo-600 to-blue-500 w-0 transition-all"></div>
                             <div class="absolute inset-0 flex items-center justify-center text-xs font-bold uppercase tracking-widest text-white mix-blend-overlay">
                                 Analyzing Artifacts...
@@ -132,52 +152,52 @@
             </div>
         </div>
 
-        <!-- Right Panel: Results -->
-        <div id="output-panel" class="w-0 overflow-hidden bg-[#0b1121] border-l border-slate-800/50 transition-[width] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] shadow-2xl">
-            <div class="w-[400px] md:w-[450px] h-full flex flex-col p-6 overflow-y-auto">
+        <!-- Right Panel: Results (Styled to match Truth41 Panels) -->
+        <div id="output-panel" class="w-0 overflow-hidden bg-gray-900 border-l border-gray-700 shadow-2xl relative z-20">
+            <div class="w-[400px] md:w-[450px] h-full flex flex-col p-6 overflow-y-auto custom-scrollbar">
                 
-                <div class="mb-6 pb-6 border-b border-slate-800/50">
-                    <h2 class="text-lg font-semibold text-white mb-1">Analysis Report</h2>
-                    <p class="text-xs text-slate-500">Forensic breakdown of visual artifacts</p>
+                <div class="mb-6 pb-6 border-b border-gray-700">
+                    <h2 class="text-xl font-bold text-white mb-1">Analysis Report</h2>
+                    <p class="text-sm text-gray-400">Forensic breakdown of visual artifacts</p>
                 </div>
 
                 <!-- Score Card -->
-                <div class="glass-panel rounded-xl p-5 mb-6 relative overflow-hidden">
+                <div class="bg-gray-800 rounded-xl p-6 mb-6 relative overflow-hidden border border-gray-700 shadow-inner">
                     <div id="score-glow" class="absolute -top-10 -right-10 w-32 h-32 bg-indigo-500/20 blur-3xl rounded-full transition-colors duration-1000"></div>
 
-                    <div class="flex justify-between items-end mb-3 relative z-10">
-                        <span class="text-[10px] font-bold font-mono text-slate-400 uppercase tracking-widest">AI Probability</span>
-                        <span id="score-display" class="text-3xl font-bold text-white tracking-tighter">0%</span>
+                    <div class="flex justify-between items-end mb-4 relative z-10">
+                        <span class="text-xs font-bold font-mono text-gray-400 uppercase tracking-widest">AI Probability</span>
+                        <span id="score-display" class="text-4xl font-bold text-white tracking-tighter">0%</span>
                     </div>
                     
-                    <div class="w-full bg-slate-900/50 h-1.5 rounded-full overflow-hidden relative z-10">
+                    <div class="w-full bg-gray-900 h-2 rounded-full overflow-hidden relative z-10 border border-gray-700">
                         <div id="score-bar" class="h-full bg-indigo-500 rounded-full transition-all duration-1000 w-0 shadow-[0_0_10px_rgba(99,102,241,0.5)]"></div>
                     </div>
                     
-                    <div id="verdict-badge" class="mt-4 text-center text-xs font-bold uppercase py-2 rounded-lg bg-slate-800/50 border border-slate-700/50 text-slate-400 relative z-10 transition-colors duration-500">
+                    <div id="verdict-badge" class="mt-5 text-center text-sm font-bold uppercase py-2 rounded-lg bg-gray-900 border border-gray-700 text-gray-400 relative z-10 transition-colors duration-500">
                         Waiting for input
                     </div>
                 </div>
 
                 <!-- Reasoning -->
-                <div class="space-y-6">
+                <div class="space-y-8">
                     <div>
-                        <h3 class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                            <div class="w-1 h-1 bg-indigo-400 rounded-full"></div>
+                        <h3 class="text-sm font-bold text-indigo-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                            <div class="w-1.5 h-1.5 bg-indigo-400 rounded-full"></div>
                             Forensic Reasoning
                         </h3>
-                        <p id="reasoning-text" class="text-sm text-slate-300 leading-relaxed bg-slate-800/30 p-4 rounded-lg border border-slate-700/30 shadow-inner">
+                        <p id="reasoning-text" class="text-sm text-gray-300 leading-relaxed bg-gray-800 p-4 rounded-lg border border-gray-700 shadow-sm">
                             No data available.
                         </p>
                     </div>
 
                     <div>
-                        <h3 class="text-[10px] font-bold text-red-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                            <div class="w-1 h-1 bg-red-400 rounded-full"></div>
+                        <h3 class="text-sm font-bold text-red-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                            <div class="w-1.5 h-1.5 bg-red-400 rounded-full"></div>
                             Detected Anomalies
                         </h3>
                         <ul id="suspicious-list" class="space-y-2">
-                            <li class="text-xs text-slate-500 italic pl-1">Awaiting analysis scan...</li>
+                            <li class="text-sm text-gray-500 italic pl-1">Awaiting analysis scan...</li>
                         </ul>
                     </div>
                 </div>
@@ -285,7 +305,7 @@
             scoreDisplay.textContent = '0%';
             verdictBadge.textContent = 'WAITING FOR INPUT';
             reasoningText.textContent = 'No data available.';
-            suspiciousList.innerHTML = '<li class="text-xs text-slate-500 italic pl-1">Awaiting analysis scan...</li>';
+            suspiciousList.innerHTML = '<li class="text-sm text-gray-500 italic pl-1">Awaiting analysis scan...</li>';
         }
 
         // ANALYSIS
@@ -363,7 +383,7 @@
                 let color = data.score < 20 ? 'bg-emerald-500' : data.score < 60 ? 'bg-amber-500' : 'bg-rose-500';
                 let textCol = data.score < 20 ? 'text-emerald-400' : data.score < 60 ? 'text-amber-400' : 'text-rose-400';
                 scoreBar.className = `h-full rounded-full transition-all duration-1000 ${color} shadow-[0_0_12px_rgba(255,255,255,0.3)]`;
-                scoreDisplay.className = `text-3xl font-bold ${textCol}`;
+                scoreDisplay.className = `text-4xl font-bold ${textCol}`;
                 verdictBadge.textContent = data.verdict;
             }, 100);
             reasoningText.textContent = data.reasoning;
@@ -371,7 +391,7 @@
             if(data.flags && data.flags.length) {
                 data.flags.forEach(flag => {
                     const li = document.createElement('li');
-                    li.className = "flex items-start gap-3 text-xs text-slate-300 p-3 bg-slate-800/40 rounded-md border border-slate-700/30";
+                    li.className = "flex items-start gap-3 text-xs text-gray-300 p-3 bg-gray-800 rounded-md border border-gray-700";
                     li.innerHTML = `<span class="w-1.5 h-1.5 mt-1.5 rounded-full bg-rose-400 shrink-0"></span><span>${flag}</span>`;
                     suspiciousList.appendChild(li);
                 });
